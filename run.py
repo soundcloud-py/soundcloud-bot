@@ -1,4 +1,4 @@
-# Made using https://github.com/Rapptz/discord.py/blob/master/examples/basic_voice.py
+# Made using https://github.com/Rapptz/discord.py/blob/master/examples/basic_voice.py as an example
 
 import asyncio
 
@@ -6,6 +6,8 @@ import discord
 import youtube_dl
 
 from discord.ext import commands
+import config
+import os
 
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -65,7 +67,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(filename))
         chan = bot.get_channel(channel)
-        await chan.send('Now playing: {}'.format(data['title']))
+        sec = 0
+        minu = 0
+        hur = 0
+        for f in range(int(data['duration'])):
+            sec += 1
+            if sec == 60:
+                minu += 1
+                sec = 0
+                if minu == 60:
+                    hur +=1
+                    minu = 0
+        await chan.send('Now playing: {} by {}\n**----------**\n**Views:** `{}` | **Likes:** `{}` | **Reposts:** `{}`\n**Duration:** `{}hr:{}min:{}sec`'.format(data['title'], data['uploader'], data['view_count'], data['like_count'], data['repost_count'], hur, minu, sec))
         ctx.voice_client.play(source, after=lambda e: print('Player error: %s' % e) if e else None)
 
 
@@ -90,7 +103,7 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             await YTDLSource.sc(url, ctx, channel, loop=self.bot.loop)
-
+            
     @commands.command()
     async def stream(self, ctx, *, url):
         """Streams from soundcloud (Not as Stable)"""
@@ -157,6 +170,22 @@ async def help(ctx):
                    "stop   | Stop playing song and leave voice channel\n"
                    "\n"
                    "<https://github.com/soundcloud-py/soundcloud-bot>")
+    if ctx.message.author.id == config.ownerid:
+        await ctx.send("__**Owner Commands**__\n"
+                       "update | Update bot")
+
+@bot.command()
+async def update(ctx):
+    """"""
+    if ctx.message.author.id == config.ownerid:
+        await ctx.send("Updating... Check console for more information!")
+        code = os.system('git pull origin master')
+        await ctx.send("Update completed!\n"
+                       "```\n"
+                       "{}\n"
+                       "```".format(code))
+    else:
+        await ctx.send("You are not the bot owner! Check the config file to change this!")
 
 @bot.event
 async def on_ready():
