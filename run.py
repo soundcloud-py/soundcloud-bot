@@ -180,10 +180,12 @@ async def update(ctx):
     if ctx.message.author.id == config.ownerid:
         await ctx.send("Updating... Check console for more information!")
         code = os.system('git pull origin master')
-        await ctx.send("Update completed!\n"
-                       "```\n"
-                       "{}\n"
-                       "```".format(code))
+        if code == 0:
+            await ctx.send("Update completed! `Already up to date!`")
+        if code == 32768:
+            await ctx.send("Error. `.git` file does not exist!")
+        else:
+            await ctx.send("?: Code: {}".format(code))
     else:
         await ctx.send("You are not the bot owner! Check the config file to change this!")
 
@@ -193,4 +195,4 @@ async def on_ready():
     print('------')
 
 bot.add_cog(Music(bot))
-bot.run('token')
+bot.run('token)
